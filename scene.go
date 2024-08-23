@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -32,19 +33,27 @@ func NewScene() *Scene {
 }
 
 func (scene *Scene) SetUpShaderUniforms(shaderProgram uint32) {
-	// Set the light position
-	lightPos := mgl32.Vec3{1.2, 1.0, 2.0}
-	lightPosUniform := gl.GetUniformLocation(shaderProgram, gl.Str("lightPos\x00"))
-	gl.Uniform3fv(lightPosUniform, 1, &lightPos[0])
+	// Set the number of lights
+	numLightsUniform := gl.GetUniformLocation(shaderProgram, gl.Str("numLights\x00"))
+	gl.Uniform1i(numLightsUniform, int32(len(scene.Lights)))
+
+	for i, light := range scene.Lights {
+		// Set the light position
+		lightPosUniform := gl.GetUniformLocation(shaderProgram, gl.Str(fmt.Sprintf("lights[%d].position\x00", i)))
+		gl.Uniform3fv(lightPosUniform, 1, &light.Position[0])
+
+		// Set the light color
+		lightColorUniform := gl.GetUniformLocation(shaderProgram, gl.Str(fmt.Sprintf("lights[%d].color\x00", i)))
+		gl.Uniform3fv(lightColorUniform, 1, &light.Color[0])
+
+		// Set the light intensity
+		lightIntensityUniform := gl.GetUniformLocation(shaderProgram, gl.Str(fmt.Sprintf("lights[%d].intensity\x00", i)))
+		gl.Uniform1f(lightIntensityUniform, light.Intensity)
+	}
 
 	// Set the view position (camera position)
 	viewPosUniform := gl.GetUniformLocation(shaderProgram, gl.Str("viewPos\x00"))
 	gl.Uniform3fv(viewPosUniform, 1, &scene.Camera.Position[0])
-
-	// Set the light color
-	lightColor := mgl32.Vec3{1.0, 1.0, 1.0} // white light
-	lightColorUniform := gl.GetUniformLocation(shaderProgram, gl.Str("lightColor\x00"))
-	gl.Uniform3fv(lightColorUniform, 1, &lightColor[0])
 
 	// Set the object color (cube color)
 	objectColorUniform := gl.GetUniformLocation(shaderProgram, gl.Str("objectColor\x00"))

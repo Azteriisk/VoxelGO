@@ -1,14 +1,22 @@
 package main
 
 import (
+	_ "embed"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.3/glfw"
 	"github.com/go-gl/mathgl/mgl32"
 	"log"
-	"os"
 	"runtime"
 	"strings"
 )
+
+// Embed shader files directly into the executable
+//
+//go:embed vertex_shader.glsl
+var vertexShaderSource string
+
+//go:embed fragment_shader.glsl
+var fragmentShaderSource string
 
 func init() {
 	runtime.LockOSThread()
@@ -43,7 +51,7 @@ func main() {
 	scene := NewScene()
 
 	// Initialize the shader program
-	shaderProgram := CreateShaderProgram("vertex_shader.glsl", "fragment_shader.glsl")
+	shaderProgram := CreateShaderProgram()
 	gl.UseProgram(shaderProgram)
 
 	// Set up scene uniforms (lights, cube color, projection)
@@ -81,18 +89,9 @@ func main() {
 }
 
 // CreateShaderProgram loads, compiles, and links vertex and fragment shaders
-func CreateShaderProgram(vertexPath, fragmentPath string) uint32 {
-	vertexShaderSource, err := os.ReadFile(vertexPath)
-	if err != nil {
-		log.Fatalf("failed to load vertex shader: %v", err)
-	}
-	fragmentShaderSource, err := os.ReadFile(fragmentPath)
-	if err != nil {
-		log.Fatalf("failed to load fragment shader: %v", err)
-	}
-
-	vertexShader := compileShader(string(vertexShaderSource)+"\x00", gl.VERTEX_SHADER)
-	fragmentShader := compileShader(string(fragmentShaderSource)+"\x00", gl.FRAGMENT_SHADER)
+func CreateShaderProgram() uint32 {
+	vertexShader := compileShader(vertexShaderSource+"\x00", gl.VERTEX_SHADER)
+	fragmentShader := compileShader(fragmentShaderSource+"\x00", gl.FRAGMENT_SHADER)
 
 	shaderProgram := gl.CreateProgram()
 	gl.AttachShader(shaderProgram, vertexShader)
